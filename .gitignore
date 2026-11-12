@@ -1,0 +1,13 @@
+# Сборка
+build/
+cmake-build-*/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+
+# Прочее
+*.exe
+*.o
+*.obj
