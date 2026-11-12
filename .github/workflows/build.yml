@@ -20,11 +20,20 @@ jobs:
         include:
           - os: ubuntu-latest
             asset: MatrixCalculator-linux-x64
+            bin: build/app/app
             flags: -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc"
           - os: macos-latest
             asset: MatrixCalculator-macos-universal
+            bin: build/app/app
             flags: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          - os: windows-latest
+            asset: MatrixCalculator-windows-x64.exe
+            bin: build/app/Release/app.exe
+            flags: -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -38,17 +47,17 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.flags }}
 
       - name: Build
-        run: cmake --build build --target app
+        run: cmake --build build --config Release --target app
 
       - name: Smoke test
         run: |
-          printf '6\n2\n2\n1 2\n3 4\n0\n' | ./build/app/app | grep -- "-2"
+          printf '6\n2\n2\n1 2\n3 4\n0\n' | ./${{ matrix.bin }} | grep -- "-2"
 
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ github.event.release.tag_name || inputs.tag }}"
-          cp build/app/app "${{ matrix.asset }}"
+          cp "${{ matrix.bin }}" "${{ matrix.asset }}"
           chmod +x "${{ matrix.asset }}"
           gh release upload "$TAG" "${{ matrix.asset }}" --clobber
