@@ -41,7 +41,8 @@ jobs:
         run: cmake --build build --target app
 
       - name: Smoke test
-        run: printf '6\n2\n2\n1 2\n3 4\n0\n' | ./build/app/app | grep "Определитель: -2"
+        run: |
+          printf '6\n2\n2\n1 2\n3 4\n0\n' | ./build/app/app | grep -- "-2"
 
       - name: Upload to release
         env:
