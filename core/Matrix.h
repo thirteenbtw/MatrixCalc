@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "Fraction.h"
 
 class Matrix {
 public:
     size_t rows;
     size_t columns;
-    std::vector<std::vector<double>> data; //data[строка][столбец]
+    std::vector<std::vector<Fraction>> data; //data[строка][столбец]
 
     //конструктор создает матрицу r x c заполненную нулями
     Matrix(size_t r, size_t c);
@@ -15,8 +16,9 @@ public:
 
     Matrix add(Matrix other); //сложение
     Matrix subtract(Matrix other); //вычитание
-    Matrix multiplyByNumber(double number); //умножение на скаляр
+    Matrix multiplyByNumber(Fraction number); //умножение на число
     Matrix multiply(Matrix other);//умножение на матрицу
     Matrix transpose();//транспонирование
-    double determinant();//определитель
+    Fraction determinant();//определитель
+    size_t rank();//ранг
 };

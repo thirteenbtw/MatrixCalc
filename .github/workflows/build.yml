@@ -43,6 +43,13 @@ jobs:
           python-version: "3.12"
       - run: pip install cmake
 
+      # для окна (GLFW) на Linux нужны заголовки X11 и OpenGL
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.flags }}
 
@@ -51,7 +58,9 @@ jobs:
 
       - name: Smoke test
         run: |
-          printf '6\n2\n2\n1 2\n3 4\n0\n' | ./${{ matrix.bin }} | grep -- "-2"
+          # окно на сервере без экрана не открыть, поэтому проверяем консольный режим:
+          # режим 1 (матрицы), операция 6 (определитель) для матрицы 1 2 / 3 4 -> -2
+          printf '1\n6\n2\n2\n1 2\n3 4\n0\n0\n' | ./${{ matrix.bin }} --console | grep -- "-2"
 
       - name: Upload to release
         env:

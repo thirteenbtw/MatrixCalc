@@ -1,7 +1,7 @@
 #include "Matrix.h"
 #include "MathError.h"
 #include <sstream>
-#include <cmath>
+#include <utility>
 
 // Конструктор
 Matrix::Matrix(size_t r, size_t c) {
@@ -12,7 +12,7 @@ Matrix::Matrix(size_t r, size_t c) {
     columns = c;
 
     // r строк, в каждой c нулей
-    data = std::vector<std::vector<double>>(r, std::vector<double>(c, 0));
+    data = std::vector<std::vector<Fraction>>(r, std::vector<Fraction>(c, 0));
 }
 
 //сложение
@@ -65,7 +65,7 @@ std::string Matrix::toString() {
 }
 
 //умножение на скаляр
-Matrix Matrix::multiplyByNumber(double number) {
+Matrix Matrix::multiplyByNumber(Fraction number) {
     Matrix result(rows, columns);
 
     for (size_t i = 0; i < rows; i++) {
@@ -106,32 +106,68 @@ Matrix Matrix::transpose() {
 }
 
 //определитель
-double Matrix::determinant() {
+Fraction Matrix::determinant() {
     if (rows != columns) {
         throw MathError("Определитель можно найти только у квадратной матрицы");
     }
 
     Matrix temp = *this;
-    double det = 1.0;
+    Fraction det = 1;
 
     for (size_t i = 0; i < rows; i++) {
-        size_t maxElement = i;
-        for (size_t j = i + 1; j < rows; j++) {
-            if (std::abs(temp.data[j][i]) > std::abs(temp.data[maxElement][i])) {
-                maxElement = j;
-            }
+        // ищем строку с ненулевым элементом в столбце i
+        size_t pivot = i;
+        while (pivot < rows && temp.data[pivot][i] == 0) {
+            pivot++;
+        }
+        if (pivot == rows) {
+            return 0;
         }
 
-        if (std::abs(temp.data[maxElement][i]) < 1e-9) {return 0.0;}
-        if (maxElement != i) {swap(temp.data[i], temp.data[maxElement]); det = -det; }
+        if (pivot != i) {
+            std::swap(temp.data[i], temp.data[pivot]);
+            det = -det;
+        }
         det *= temp.data[i][i];
 
         for (size_t j = i + 1; j < rows; j++) {
-            double factor = temp.data[j][i] / temp.data[i][i];
+            Fraction factor = temp.data[j][i] / temp.data[i][i];
             for (size_t k = i; k < rows; k++) {
                 temp.data[j][k] -= temp.data[i][k] * factor;
             }
         }
     }
     return det;
+}
+
+//ранг
+size_t Matrix::rank() {
+    Matrix temp = *this;
+    size_t rank = 0; // сколько опорных элементов нашли
+    size_t row = 0;  // с какой строки ищем опорный
+
+    for (size_t col = 0; col < columns && row < rows; col++) {
+        // первая строка с ненулевым элементом в этом столбце
+        size_t pivot = row;
+        while (pivot < rows && temp.data[pivot][col] == 0) {
+            pivot++;
+        }
+        if (pivot == rows) {
+            continue; // весь столбец ниже нулевой
+        }
+
+        std::swap(temp.data[row], temp.data[pivot]);
+
+        // обнуляем всё под опорным элементом
+        for (size_t j = row + 1; j < rows; j++) {
+            Fraction factor = temp.data[j][col] / temp.data[row][col];
+            for (size_t k = col; k < columns; k++) {
+                temp.data[j][k] -= temp.data[row][k] * factor;
+            }
+        }
+
+        rank++;
+        row++;
+    }
+    return rank;
 }
